@@ -84,35 +84,20 @@ public class Author {
     }
 
     private static String getUsernameWithHighestCommentCount(String str){
-        List<CommentCount> result = new ArrayList<>();
-        String nameResult = null;
-        try {
-            // Parse JSON
-            Object obj1 = new JSONParser().parse(str);
-            JSONObject jo = (JSONObject) obj1;
-            JSONArray data = (JSONArray) jo.get("data");
+        Optional<String> name = null;
+        try{
 
-            Iterator<JSONObject> itr = data.iterator();
+            SearchResult searchResult = new ObjectMapper().readValue(str, SearchResult.class);
+            List<AuthorDetails> authorDetails = searchResult.getAuthorDetails();
+            name =    authorDetails.stream()
+                                   .max(Comparator.comparing(AuthorDetails::getComment_count))
+                                   .map(AuthorDetails::getUsername);
 
-            while(itr.hasNext()) {
-                Object item = new JSONParser().parse(itr.next().toString());
-                JSONObject itemObj = (JSONObject) item;
-                String username = (String) itemObj.get("username");
-                Long commentCount = (Long) itemObj.get("comment_count");
-
-                result.add(new CommentCount(username, commentCount));
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        Optional<CommentCount> name = result.stream().max(Comparator.comparing(CommentCount::getCount));
-
-        if (name.isPresent()) {
-            nameResult = name.get().getName();
-        }
-
-        return nameResult;
+        return name.get();
     }
 
     private static List<String> getUsernamesSortedByRecordDate(String response) {
